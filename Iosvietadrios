@@ -1,0 +1,215 @@
+--==================================================
+-- IOS VIET RBX - FINAL GOD LOCAL VERSION
+--==================================================
+
+--================ CONFIG =================
+local ADMIN_USER = "QuocBao"
+local ADMIN_PASS = "19871982iosviet"
+
+local FIXED_KEY = "IOSVIETRBX"
+local FIXED_DAYS = 5
+local FIXED_LIMIT = 50
+
+local TIKTOK_LINK = "https://www.tiktok.com/@yourtiktok"
+local MAIN_SCRIPT = "https://pastefy.app/H8AvykYc/raw"
+local SAVE_FILE = "iosviet_rbx_data.json"
+--========================================
+
+local HttpService = game:GetService("HttpService")
+local HWID = game:GetService("RbxAnalyticsService"):GetClientId()
+
+--================ ANTI BASIC =================
+pcall(function()
+    hookfunction(getgc, function() return {} end)
+    hookfunction(debug.getupvalues, function() return {} end)
+    hookfunction(debug.getconstants, function() return {} end)
+end)
+
+--================ DATABASE =================
+local Data = {
+    keys = {},
+    fixed = {
+        expire = os.time() + (FIXED_DAYS * 86400),
+        uses = FIXED_LIMIT
+    }
+}
+
+local function save()
+    if writefile then
+        writefile(SAVE_FILE, HttpService:JSONEncode(Data))
+    end
+end
+
+local function load()
+    if isfile and isfile(SAVE_FILE) then
+        local ok,decoded = pcall(function()
+            return HttpService:JSONDecode(readfile(SAVE_FILE))
+        end)
+        if ok and decoded then
+            Data = decoded
+        end
+    end
+end
+load()
+
+--================ CHECK KEY =================
+local function checkKey(key)
+    -- FIXED KEY
+    if key == FIXED_KEY then
+        if os.time() > Data.fixed.expire then
+            return false, "Key IOSVIETRBX hết hạn"
+        end
+        if Data.fixed.uses <= 0 then
+            return false, "Key IOSVIETRBX hết lượt"
+        end
+        Data.fixed.uses -= 1
+        save()
+        return true
+    end
+
+    -- NORMAL KEY
+    local d = Data.keys[key]
+    if not d then return false,"Key sai" end
+    if os.time() > d.expire then return false,"Key hết hạn" end
+    if d.hwid ~= "" and d.hwid ~= HWID then
+        return false,"Sai HWID"
+    end
+    if d.hwid == "" then
+        d.hwid = HWID
+        save()
+    end
+    return true
+end
+
+--================ UI =================
+local gui = Instance.new("ScreenGui", game.CoreGui)
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromScale(0.42,0.48)
+main.Position = UDim2.fromScale(0.29,0.25)
+main.BackgroundColor3 = Color3.fromRGB(18,18,18)
+main.Active=true main.Draggable=true
+
+local box = Instance.new("TextBox", main)
+box.Size=UDim2.fromScale(0.9,0.14)
+box.Position=UDim2.fromScale(0.05,0.12)
+box.PlaceholderText="Nhập key hoặc admin user|pass"
+
+local status = Instance.new("TextLabel", main)
+status.Size=UDim2.fromScale(0.9,0.1)
+status.Position=UDim2.fromScale(0.05,0.28)
+status.BackgroundTransparency=1
+status.TextColor3=Color3.new(1,1,1)
+status.Text="IOS VIET RBX"
+
+local okBtn = Instance.new("TextButton", main)
+okBtn.Size=UDim2.fromScale(0.9,0.14)
+okBtn.Position=UDim2.fromScale(0.05,0.42)
+okBtn.Text="Xác nhận"
+
+local getKeyBtn = Instance.new("TextButton", main)
+getKeyBtn.Size=UDim2.fromScale(0.9,0.12)
+getKeyBtn.Position=UDim2.fromScale(0.05,0.6)
+getKeyBtn.Text="Get Key (TikTok)"
+
+local adminBtn = Instance.new("TextButton", main)
+adminBtn.Size=UDim2.fromScale(0.15,0.12)
+adminBtn.Position=UDim2.fromScale(0.8,0.02)
+adminBtn.Text="⚙"
+
+--================ ADMIN PANEL =================
+local admin = Instance.new("Frame", gui)
+admin.Size=UDim2.fromScale(0.45,0.55)
+admin.Position=UDim2.fromScale(0.275,0.22)
+admin.BackgroundColor3=Color3.fromRGB(12,12,12)
+admin.Visible=false
+admin.Active=true admin.Draggable=true
+
+local list = Instance.new("TextLabel", admin)
+list.Size=UDim2.fromScale(0.9,0.7)
+list.Position=UDim2.fromScale(0.05,0.05)
+list.TextWrapped=true
+list.TextXAlignment=Left
+list.TextYAlignment=Top
+list.BackgroundTransparency=1
+list.TextColor3=Color3.new(1,1,1)
+
+local create = Instance.new("TextButton", admin)
+create.Size=UDim2.fromScale(0.28,0.12)
+create.Position=UDim2.fromScale(0.05,0.8)
+create.Text="Tạo key"
+
+local del = Instance.new("TextButton", admin)
+del.Size=UDim2.fromScale(0.28,0.12)
+del.Position=UDim2.fromScale(0.36,0.8)
+del.Text="Xoá key"
+
+local extend = Instance.new("TextButton", admin)
+extend.Size=UDim2.fromScale(0.28,0.12)
+extend.Position=UDim2.fromScale(0.67,0.8)
+extend.Text="Gia hạn"
+
+local function refresh()
+    local t = "FIXED KEY: IOSVIETRBX | "
+        ..math.max(0,Data.fixed.uses).." lượt | "
+        ..os.date("%d/%m/%Y",Data.fixed.expire).."\n\n"
+
+    for k,v in pairs(Data.keys) do
+        t ..= k.." | "..os.date("%d/%m/%Y",v.expire)
+            .." | "..(v.hwid~="" and "LOCK" or "FREE").."\n"
+    end
+    list.Text = t
+end
+
+--================ ACTION =================
+getKeyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then setclipboard(TIKTOK_LINK) end
+    status.Text="Đã copy link TikTok"
+end)
+
+okBtn.MouseButton1Click:Connect(function()
+    local ok,msg = checkKey(box.Text)
+    if ok then
+        gui:Destroy()
+        loadstring(game:HttpGet(MAIN_SCRIPT))()
+    else
+        status.Text=msg
+    end
+end)
+
+adminBtn.MouseButton1Click:Connect(function()
+    local u,p = box.Text:match("([^|]+)|([^|]+)")
+    if u==ADMIN_USER and p==ADMIN_PASS then
+        admin.Visible=true
+        refresh()
+    else
+        status.Text="Sai admin"
+    end
+end)
+
+create.MouseButton1Click:Connect(function()
+    local k="IOSVIET-"..math.random(100000,999999)
+    Data.keys[k]={expire=os.time()+86400, hwid=""}
+    save() refresh()
+    warn("[ADMIN] New key:",k)
+end)
+
+del.MouseButton1Click:Connect(function()
+    Data.keys[box.Text]=nil
+    save() refresh()
+end)
+
+extend.MouseButton1Click:Connect(function()
+    if Data.keys[box.Text] then
+        Data.keys[box.Text].expire += 86400
+        save() refresh()
+    end
+end)
+
+--================ AUTO LOGIN =================
+for _,v in pairs(Data.keys) do
+    if v.hwid==HWID and os.time()<v.expire then
+        gui:Destroy()
+        loadstring(game:HttpGet(MAIN_SCRIPT))()
+    end
+end
