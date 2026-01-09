@@ -10,7 +10,7 @@ local FIXED_KEY = "IOSVIETRBX"
 local FIXED_DAYS = 5
 local FIXED_LIMIT = 50
 
-local TIKTOK_LINK = "https://www.tiktok.com/@yourtiktok"
+local TIKTOK_LINK = "https://discord.gg/DGJpntrPzj"
 local MAIN_SCRIPT = "https://pastefy.app/H8AvykYc/raw"
 local SAVE_FILE = "iosviet_rbx_data.json"
 --========================================
