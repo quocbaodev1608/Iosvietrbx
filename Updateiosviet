@@ -50,7 +50,7 @@ MainTab:CreateButton({
       })
       
       -- Script gốc của bạn
-      loadstring(game:HttpGet("https://pastefy.app/mPTFIQ5i/raw"))()
+      loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw))()
    end,
 })
 
