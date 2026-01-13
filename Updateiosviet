@@ -50,14 +50,14 @@ MainTab:CreateButton({
       })
       
       -- Script gốc của bạn
-      loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw))()
+      loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw"))()
    end,
 })
 
 MainTab:CreateButton({
    Name = "📋 Copy Script Link (Dành cho bạn bè)",
    Callback = function()
-      setclipboard("loadstring(game:HttpGet('https://pastefy.app/H8AvykYc/raw'))()")
+      setclipboard("loadstring(game:HttpGet('https://pastefy.app/kYWzmV55/raw'))()")
       Rayfield:Notify({
          Title = "Đã Copy!",
          Content = "Script đã được lưu vào bộ nhớ tạm.",
