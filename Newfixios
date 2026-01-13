@@ -1,0 +1,59 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Khởi tạo Window
+local Window = Rayfield:CreateWindow({
+   Name = "Giới thiệu Script & Discord",
+   LoadingTitle = "Đang tải dữ liệu...",
+   LoadingSubtitle = "Vui lòng chờ trong giây lát",
+   ConfigurationSaving = {
+      Enabled = false
+   },
+   Discord = {
+      Enabled = true,
+      Invite = "VpZGQnY54", -- Chỉ để mã mời (phần sau discord.gg/)
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+-- Tạo Tab thông báo
+local Tab = Window:CreateTab("Thông báo", 4483362458) -- Icon ID
+
+local Section = Tab:CreateSection("Chào mừng bạn!")
+
+Tab:CreateLabel("Script được hỗ trợ bởi Discord của chúng tôi")
+
+Tab:CreateButton({
+   Name = "Sao chép Link Discord",
+   Callback = function()
+      setclipboard("https://discord.gg/VpZGQnY54")
+      Rayfield:Notify({
+         Title = "Thành công!",
+         Content = "Đã sao chép link Discord vào bộ nhớ tạm.",
+         Duration = 5,
+         Image = 4483362458,
+      })
+   end,
+})
+
+Tab:CreateButton({
+   Name = "Chạy Script Chính (Loadstring)",
+   Callback = function()
+      Rayfield:Notify({
+         Title = "Đang thực thi",
+         Content = "Script chính đang được tải...",
+         Duration = 3,
+         Image = 4483362458,
+      })
+      -- Chạy link script của bạn
+      loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw"))()
+   end,
+})
+
+-- Thông báo khi load xong
+Rayfield:Notify({
+   Title = "Sẵn sàng!",
+   Content = "Hãy nhấn nút 'Chạy Script Chính' để bắt đầu.",
+   Duration = 5,
+   Image = 4483362458,
+})
