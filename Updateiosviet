@@ -1,92 +1,91 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
--- Tạo cửa sổ chính với tông màu Đen/Đỏ (hoặc Đen hoàn toàn)
-local Window = Rayfield:CreateWindow({
-   Name = "🌑 BUBUOIKOEM3 PREMIUM HUB",
-   LoadingTitle = "Đang khởi tạo hệ thống...",
-   LoadingSubtitle = "by @bubuoikoem3",
-   ConfigurationSaving = {
-      Enabled = false
-   },
-   Discord = {
-      Enabled = true,
-      Invite = "9sZAVVJud", -- Chỉ cần mã mời
-      RememberJoins = true
-   },
-   KeySystem = false -- Tắt hệ thống key để anh em vào thẳng cho sướng
+-- 1. Thông báo khởi động [cite: 1]
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "💢 IosVietVN 🇻🇳",
+    Text = "Đang khởi động script vui lòng join discord để antiband bypass cao hơn",
+    Icon = "rbxassetid://121471149924300",
+    Duration = 6
 })
 
--- Hiệu ứng thông báo khi vừa mở Script
-Rayfield:Notify({
-   Title = "Hệ thống đã sẵn sàng!",
-   Content = "Chào mừng @bubuoikoem3 đã trở lại. Chúc bạn trải nghiệm tốt nhất!",
-   Duration = 6.5,
-   Image = 4483362458,
-   Actions = { 
-      Ignore = {
-         Name = "Đồng ý!",
-         Callback = function()
-            print("Người dùng đã xác nhận")
-         end
-      },
-   },
-})
+-- 2. Cấu hình Cinematic Intro chung [cite: 1]
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
 
--- Tab Chính
-local MainTab = Window:CreateTab("⚡ Script Main", 4483362458) 
+-- Lớp làm mờ nền [cite: 1]
+local BlurFrame = Instance.new("Frame", ScreenGui)
+BlurFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlurFrame.BackgroundTransparency = 0.4 
+BlurFrame.Size = UDim2.new(1, 0, 1, 0)
 
-MainTab:CreateSection("Điều khiển chính")
+-- 3. ĐOẠN INTRO 1: Téo scrVN™ [cite: 2]
+local TextLabel = Instance.new("TextLabel", ScreenGui)
+TextLabel.Size = UDim2.new(1, 0, 1, 0)
+TextLabel.BackgroundTransparency = 1 [cite: 2]
+TextLabel.Text = "💢 IosVietVN 🇻🇳"
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.TextStrokeTransparency = 0.2
+TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 170, 255)
+TextLabel.Font = Enum.Font.GothamBlack
+TextLabel.TextScaled = true
+TextLabel.TextTransparency = 1
 
-MainTab:CreateButton({
-   Name = "🚀 KÍCH HOẠT SCRIPT (LOADSTRING)",
-   Info = "Bấm vào đây để bắt đầu chạy script chính của bạn",
-   Callback = function()
-      -- Hiệu ứng chạy script
-      Rayfield:Notify({
-         Title = "Đang tải dữ liệu...",
-         Content = "Vui lòng chờ trong giây lát...",
-         Duration = 2,
-         Image = 4483362458,
-      })
-      
-      -- Script gốc của bạn
-      loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw"))()
-   end,
-})
+local fadeIn = TweenService:Create(TextLabel, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
+local fadeOut = TweenService:Create(TextLabel, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
 
-MainTab:CreateButton({
-   Name = "📋 Copy Script Link (Dành cho bạn bè)",
-   Callback = function()
-      setclipboard("loadstring(game:HttpGet('https://pastefy.app/kYWzmV55/raw'))()")
-      Rayfield:Notify({
-         Title = "Đã Copy!",
-         Content = "Script đã được lưu vào bộ nhớ tạm.",
-         Duration = 3,
-         Image = 4483362458,
-      })
-   end,
-})
+fadeIn:Play()
+task.wait(2)
+fadeOut:Play()
+task.wait(1)
 
--- Tab Cộng đồng
-local InfoTab = Window:CreateTab("🌐 Social", 4483362458)
+-- 4. ĐOẠN INTRO 2: Discord IosViet (Mới)
+TextLabel.Text = "Hãy Join DisCord IosViet"
+TextLabel.TextColor3 = Color3.fromRGB(88, 101, 242) -- Màu Discord
+fadeIn:Play()
 
-InfoTab:CreateSection("Kết nối với mình")
+-- Nút Lấy Link
+local LinkButton = Instance.new("TextButton", ScreenGui)
+LinkButton.Size = UDim2.fromOffset(200, 50)
+LinkButton.Position = UDim2.new(0.5, -100, 0.7, 0)
+LinkButton.BackgroundColor3 = Color3.fromRGB(255, 15, 123)
+LinkButton.Text = "Nút Lấy Link"
+LinkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+LinkButton.Font = Enum.Font.GothamBold
+LinkButton.TextSize = 20
+LinkButton.AutoButtonColor = true
 
-InfoTab:CreateButton({
-   Name = "🔥 THAM GIA DISCORD (MỜI HẤP DẪN)",
-   Info = "Nơi cập nhật script mới nhất và hỗ trợ 24/7",
-   Callback = function()
-      setclipboard("https://discord.gg/9sZAVVJud")
-      Rayfield:Notify({
-         Title = "Đã Copy Link Discord",
-         Content = "Dán vào trình duyệt để gia nhập đại gia đình nhé!",
-         Duration = 5,
-         Image = 4483362458,
-      })
-   end,
-})
+-- Bo góc nút
+local UICorner = Instance.new("UICorner", LinkButton)
+UICorner.CornerRadius = UDim.new(0, 12)
 
-InfoTab:CreateLabel("TikTok: @bubuoikoem3")
-InfoTab:CreateLabel("Cảm ơn bạn đã tin dùng script của mình!")
+local linkClicked = false
+LinkButton.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard("https://discord.gg/VpZGQnY54")
+        LinkButton.Text = "Đã Copy Link!"
+    else
+        LinkButton.Text = "Lỗi (Ko hỗ trợ copy)"
+    end
+    task.wait(1)
+    linkClicked = true
+end)
 
--- Hiệu ứng gập menu (Giao diện đen huyền bí)
+-- Chờ cho đến khi nhấn nút hoặc tự động qua sau 5 giây
+local timeout = 0
+while not linkClicked and timeout < 5 do
+    task.wait(1)
+    timeout = timeout + 1
+end
+
+-- Kết thúc intro
+fadeOut:Play()
+local fadeBg = TweenService:Create(BlurFrame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
+fadeBg:Play()
+
+task.wait(1)
+ScreenGui:Destroy()
+
+-- 5. CHẠY SCRIPT CHÍNH
+loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw"))()
