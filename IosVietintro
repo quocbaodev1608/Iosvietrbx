@@ -1,91 +1,97 @@
 -- 1. Thông báo khởi động [cite: 1]
-local StarterGui = game:GetService("StarterGui")
-StarterGui:SetCore("SendNotification", {
-    Title = "💢 IosVietVN 🇻🇳",
-    Text = "Đang khởi động script vui lòng join discord để antiband bypass cao hơn",
-    Icon = "rbxassetid://121471149924300",
+local CoreGuiService = game:GetService("StarterGui")
+CoreGuiService:SetCore("SendNotification", {
+    Title = "💢 IOSVIETVN ❤️",
+    Text = "Đang khởi động script... Vui lòng tham gia Discord!",
+    Icon = "rbxassetid://121471149924300", -- Bạn có thể thay ID icon tại đây
     Duration = 6
 })
 
--- 2. Cấu hình Cinematic Intro chung [cite: 1]
+-- 2. Cấu hình Cinematic Intro 
 local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local ScreenGui = Instance.new("ScreenGui", CoreGui)
+
+-- Sử dụng PlayerGui để tương thích tốt hơn với Delta/Mobile
+local ParentGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+local ScreenGui = Instance.new("ScreenGui", ParentGui)
+ScreenGui.Name = "IOSVIET_Intro"
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.ResetOnSpawn = false
 
--- Lớp làm mờ nền [cite: 1]
+-- Lớp làm mờ nền 
 local BlurFrame = Instance.new("Frame", ScreenGui)
 BlurFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-BlurFrame.BackgroundTransparency = 0.4 
+BlurFrame.BackgroundTransparency = 0.4
 BlurFrame.Size = UDim2.new(1, 0, 1, 0)
 
--- 3. ĐOẠN INTRO 1: Téo scrVN™ [cite: 2]
+-- Hiệu ứng chữ 
 local TextLabel = Instance.new("TextLabel", ScreenGui)
 TextLabel.Size = UDim2.new(1, 0, 1, 0)
-TextLabel.BackgroundTransparency = 1 [cite: 2]
-TextLabel.Text = "💢 IosVietVN 🇻🇳"
+TextLabel.BackgroundTransparency = 1
+TextLabel.Text = "💢 IOSVIETVN ❤️"
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.TextStrokeTransparency = 0.2
-TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 170, 255)
+TextLabel.TextStrokeColor3 = Color3.fromRGB(255, 0, 0) -- Đổi sang màu đỏ cho hợp style
 TextLabel.Font = Enum.Font.GothamBlack
 TextLabel.TextScaled = true
 TextLabel.TextTransparency = 1
 
+-- Khởi tạo hiệu ứng Fade 
 local fadeIn = TweenService:Create(TextLabel, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
 local fadeOut = TweenService:Create(TextLabel, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1})
+local fadeBg = TweenService:Create(BlurFrame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
 
+-- --- CHẠY INTRO 1: Tên Thương Hiệu ---
 fadeIn:Play()
 task.wait(2)
 fadeOut:Play()
 task.wait(1)
 
--- 4. ĐOẠN INTRO 2: Discord IosViet (Mới)
+-- --- CHẠY INTRO 2: Discord & Nút Link ---
 TextLabel.Text = "Hãy Join DisCord IosViet"
-TextLabel.TextColor3 = Color3.fromRGB(88, 101, 242) -- Màu Discord
+TextLabel.TextColor3 = Color3.fromRGB(88, 101, 242)
 fadeIn:Play()
 
--- Nút Lấy Link
-local LinkButton = Instance.new("TextButton", ScreenGui)
-LinkButton.Size = UDim2.fromOffset(200, 50)
-LinkButton.Position = UDim2.new(0.5, -100, 0.7, 0)
-LinkButton.BackgroundColor3 = Color3.fromRGB(255, 15, 123)
-LinkButton.Text = "Nút Lấy Link"
-LinkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-LinkButton.Font = Enum.Font.GothamBold
-LinkButton.TextSize = 20
-LinkButton.AutoButtonColor = true
+-- Tạo nút lấy link
+local LinkBtn = Instance.new("TextButton", ScreenGui)
+LinkBtn.Size = UDim2.fromOffset(220, 60)
+LinkBtn.Position = UDim2.new(0.5, -110, 0.7, 0)
+LinkBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+LinkBtn.Text = "Nút Lấy Link"
+LinkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LinkBtn.Font = Enum.Font.GothamBold
+LinkBtn.TextSize = 24
+LinkBtn.AutoButtonColor = true
 
--- Bo góc nút
-local UICorner = Instance.new("UICorner", LinkButton)
-UICorner.CornerRadius = UDim.new(0, 12)
+local UICorner = Instance.new("UICorner", LinkBtn)
+UICorner.CornerRadius = UDim.new(0, 15)
 
-local linkClicked = false
-LinkButton.MouseButton1Click:Connect(function()
+local clicked = false
+LinkBtn.MouseButton1Click:Connect(function()
     if setclipboard then
         setclipboard("https://discord.gg/VpZGQnY54")
-        LinkButton.Text = "Đã Copy Link!"
+        LinkBtn.Text = "Đã Copy Link!"
     else
-        LinkButton.Text = "Lỗi (Ko hỗ trợ copy)"
+        LinkBtn.Text = "Hãy chụp màn hình link"
     end
-    task.wait(1)
-    linkClicked = true
+    task.wait(1.5)
+    clicked = true
 end)
 
--- Chờ cho đến khi nhấn nút hoặc tự động qua sau 5 giây
-local timeout = 0
-while not linkClicked and timeout < 5 do
+-- Chờ người dùng nhấn hoặc tự đóng sau 6 giây
+local count = 0
+while not clicked and count < 6 do
     task.wait(1)
-    timeout = timeout + 1
+    count = count + 1
 end
 
--- Kết thúc intro
+-- Dọn dẹp Intro
 fadeOut:Play()
-local fadeBg = TweenService:Create(BlurFrame, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
 fadeBg:Play()
-
+LinkBtn:Destroy()
 task.wait(1)
 ScreenGui:Destroy()
 
--- 5. CHẠY SCRIPT CHÍNH
+-- 3. CHẠY SCRIPT CHÍNH
 loadstring(game:HttpGet("https://pastefy.app/kYWzmV55/raw"))()
