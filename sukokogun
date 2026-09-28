@@ -1,0 +1,538 @@
+--============================================================
+-- KEY SYSTEM v3 - By IPHONEKUPI VN🇻🇳
+-- 2 loại key: FREE (24h/10 lượt) + LINK4M (48h/99 lượt)
+--============================================================
+
+local CONFIG = {
+    -- Danh sách key hợp lệ
+    KEYS = {
+        ["IPHONEKUPIFREE"] = {
+            duration  = 24 * 60 * 60,  -- 24 giờ
+            maxUses   = 10,            -- 10 lượt
+            label     = "FREE",
+        },
+        ["IPHONEKUPILINK4M"] = {
+            duration  = 48 * 60 * 60,  -- 48 giờ
+            maxUses   = 99,            -- 99 lượt
+            label     = "LINK4M",
+        },
+    },
+
+    DISCORD_URL   = "https://discord.gg/Z4T67J9zKS",
+    SCRIPT_URL    = "https://raw.githubusercontent.com/Ctgv-thw/Script-By-inTikTok-Ctgv_thw/refs/heads/main/Aimbot%2Besp%2Bplayer(Ctgv_thw).txt.lua.txt",
+    SAVE_FILE     = "iphonekupi_data.txt",
+    INTRO_TIME    = 3,
+}
+
+--============= SERVICES =============
+local CoreGui      = game:GetService("CoreGui")
+local HttpService  = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+
+--============= HWID =============
+local function getHWID()
+    local id = ""
+    pcall(function()
+        id = game:GetService("RbxAnalyticsService"):GetClientId()
+    end)
+    if id == "" and gethwid then
+        pcall(function() id = gethwid() end)
+    end
+    if id == "" then
+        id = tostring(game.Players.LocalPlayer.UserId) .. "_" .. game.Players.LocalPlayer.Name
+    end
+    return id
+end
+
+local MY_HWID = getHWID()
+
+--============= LƯU / ĐỌC DỮ LIỆU =============
+-- Format: key|hwid|activated_at|uses_left
+-- Lưu nhiều key cùng lúc (dùng xuống dòng \n phân tách)
+
+local function loadAllData()
+    local data = {}
+    if isfile and isfile(CONFIG.SAVE_FILE) then
+        local ok, raw = pcall(readfile, CONFIG.SAVE_FILE)
+        if ok and raw then
+            for line in string.gmatch(raw, "([^\n]+)") do
+                local parts = {}
+                for p in string.gmatch(line, "([^|]+)") do
+                    table.insert(parts, p)
+                end
+                if #parts >= 4 then
+                    data[parts[1]] = {
+                        hwid         = parts[2],
+                        activated_at = tonumber(parts[3]) or 0,
+                        uses_left    = tonumber(parts[4]) or 0,
+                    }
+                end
+            end
+        end
+    end
+    return data
+end
+
+local function saveAllData(data)
+    if not writefile then return end
+    local lines = {}
+    for k, v in pairs(data) do
+        table.insert(lines, table.concat({
+            k, v.hwid, tostring(v.activated_at), tostring(v.uses_left)
+        }, "|"))
+    end
+    pcall(writefile, CONFIG.SAVE_FILE, table.concat(lines, "\n"))
+end
+
+--============= CHECK KEY =============
+local function checkKey(key)
+    -- 1. Kiểm tra key có trong danh sách không
+    local info = CONFIG.KEYS[key]
+    if not info then
+        return false, "❌ Key không đúng hoặc không tồn tại!"
+    end
+
+    -- 2. Đọc dữ liệu
+    local allData = loadAllData()
+    local rec = allData[key]
+
+    -- 3. Nếu chưa có record → kích hoạt lần đầu
+    if not rec then
+        local now = os.time()
+        allData[key] = {
+            hwid         = MY_HWID,
+            activated_at = now,
+            uses_left    = info.maxUses - 1,  -- Trừ 1 lượt cho lần này
+        }
+        saveAllData(allData)
+        local hrs = math.floor(info.duration / 3600)
+        return true, string.format(
+            "✅ Kích hoạt [%s] — Hạn %dh — Còn %d lượt",
+            info.label, hrs, info.maxUses - 1
+        )
+    end
+
+    -- 4. Check HWID
+    if rec.hwid ~= MY_HWID then
+        return false, "🔒 Key đã khóa trên máy khác!"
+    end
+
+    -- 5. Check thời hạn
+    local now = os.time()
+    local elapsed = now - rec.activated_at
+    local remain  = info.duration - elapsed
+
+    if remain <= 0 then
+        return false, "⏰ Key đã hết hạn!"
+    end
+
+    -- 6. Check số lượt
+    if rec.uses_left <= 0 then
+        return false, "🚫 Key đã hết lượt sử dụng!"
+    end
+
+    -- 7. Trừ 1 lượt
+    rec.uses_left = rec.uses_left - 1
+    allData[key] = rec
+    saveAllData(allData)
+
+    local d = math.floor(remain / 86400)
+    local h = math.floor((remain % 86400) / 3600)
+    local m = math.floor((remain % 3600) / 60)
+
+    return true, string.format(
+        "✅ Key [%s] — Còn %dd %dh %dm — Còn %d lượt",
+        info.label, d, h, m, rec.uses_left
+    )
+end
+
+--============= INTRO =============
+local function showIntro(onDone)
+    local intro = Instance.new("ScreenGui")
+    intro.Name = "IPHONEKUPI_Intro"
+    intro.ResetOnSpawn = false
+    intro.IgnoreGuiInset = true
+    intro.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    intro.Parent = CoreGui
+
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(10, 5, 10)
+    bg.BorderSizePixel = 0
+    bg.Parent = intro
+
+    local logo = Instance.new("TextLabel")
+    logo.Size = UDim2.new(0, 500, 0, 80)
+    logo.Position = UDim2.new(0.5, -250, 0.5, -60)
+    logo.BackgroundTransparency = 1
+    logo.Text = "IPHONEKUPI VN🇻🇳"
+    logo.TextColor3 = Color3.fromRGB(255, 60, 60)
+    logo.Font = Enum.Font.GothamBlack
+    logo.TextSize = 48
+    logo.TextTransparency = 1
+    logo.Parent = intro
+
+    local logoGrad = Instance.new("UIGradient")
+    logoGrad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0)),
+    }
+    logoGrad.Parent = logo
+
+    local sub = Instance.new("TextLabel")
+    sub.Size = UDim2.new(0, 500, 0, 30)
+    sub.Position = UDim2.new(0.5, -250, 0.5, 20)
+    sub.BackgroundTransparency = 1
+    sub.Text = "PREMIUM KEY SYSTEM v3"
+    sub.TextColor3 = Color3.fromRGB(255, 215, 0)
+    sub.Font = Enum.Font.GothamBold
+    sub.TextSize = 16
+    sub.TextTransparency = 1
+    sub.Parent = intro
+
+    local barBg = Instance.new("Frame")
+    barBg.Size = UDim2.new(0, 300, 0, 4)
+    barBg.Position = UDim2.new(0.5, -150, 0.5, 80)
+    barBg.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
+    barBg.BorderSizePixel = 0
+    barBg.Parent = intro
+    Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
+
+    local barFill = Instance.new("Frame")
+    barFill.Size = UDim2.new(0, 0, 1, 0)
+    barFill.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    barFill.BorderSizePixel = 0
+    barFill.Parent = barBg
+    Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
+
+    local barGrad = Instance.new("UIGradient")
+    barGrad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 215, 0)),
+    }
+    barGrad.Parent = barFill
+
+    local ring = Instance.new("Frame")
+    ring.Size = UDim2.new(0, 200, 0, 200)
+    ring.Position = UDim2.new(0.5, -100, 0.5, -100)
+    ring.BackgroundTransparency = 1
+    ring.ZIndex = 0
+    ring.Parent = intro
+
+    Instance.new("UICorner", ring).CornerRadius = UDim.new(1, 0)
+
+    local ringStroke = Instance.new("UIStroke", ring)
+    ringStroke.Color = Color3.fromRGB(255, 60, 60)
+    ringStroke.Thickness = 2
+    ringStroke.Transparency = 1
+
+    TweenService:Create(logo, TweenInfo.new(0.6), { TextTransparency = 0 }):Play()
+    TweenService:Create(sub, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0.3), { TextTransparency = 0 }):Play()
+
+    task.spawn(function()
+        for i = 1, 20 do
+            ringStroke.Transparency = 0.5
+            TweenService:Create(ringStroke, TweenInfo.new(0.3), { Transparency = 1 }):Play()
+            TweenService:Create(ring, TweenInfo.new(0.6), {
+                Size = UDim2.new(0, 400, 0, 400),
+                Position = UDim2.new(0.5, -200, 0.5, -200)
+            }):Play()
+            task.wait(0.3)
+            ring.Size = UDim2.new(0, 200, 0, 200)
+            ring.Position = UDim2.new(0.5, -100, 0.5, -100)
+        end
+    end)
+
+    local steps = 30
+    task.spawn(function()
+        for i = 1, steps do
+            TweenService:Create(barFill, TweenInfo.new(CONFIG.INTRO_TIME / steps), {
+                Size = UDim2.new(i / steps, 0, 1, 0)
+            }):Play()
+            task.wait(CONFIG.INTRO_TIME / steps)
+        end
+    end)
+
+    task.delay(CONFIG.INTRO_TIME, function()
+        for _, obj in ipairs({bg, logo, sub, barBg, barFill}) do
+            if obj:IsA("TextLabel") then
+                TweenService:Create(obj, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+            else
+                TweenService:Create(obj, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+            end
+        end
+        task.wait(0.5)
+        intro:Destroy()
+        if onDone then onDone() end
+    end)
+end
+
+--============= UI CHÍNH =============
+local function createUI()
+    if CoreGui:FindFirstChild("IPHONEKUPI_KeyUI") then
+        CoreGui.IPHONEKUPI_KeyUI:Destroy()
+    end
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "IPHONEKUPI_KeyUI"
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = CoreGui
+
+    local main = Instance.new("Frame")
+    main.Name = "Main"
+    main.Size = UDim2.new(0, 420, 0, 400)
+    main.Position = UDim2.new(0.5, -210, 0.5, -200)
+    main.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    main.BorderSizePixel = 0
+    main.Active = true
+    main.Draggable = true
+    main.Parent = gui
+
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
+
+    local stroke = Instance.new("UIStroke", main)
+    stroke.Color = Color3.fromRGB(255, 60, 60)
+    stroke.Thickness = 2
+
+    local grad = Instance.new("UIGradient", main)
+    grad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 20, 25)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 15, 15)),
+    }
+    grad.Rotation = 45
+
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 50)
+    title.BackgroundTransparency = 1
+    title.Text = "IPHONEKUPI VN🇻🇳"
+    title.TextColor3 = Color3.fromRGB(255, 90, 90)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 22
+    title.Parent = main
+
+    -- Nút đóng
+    local close = Instance.new("TextButton")
+    close.Size = UDim2.new(0, 30, 0, 30)
+    close.Position = UDim2.new(1, -38, 0, 10)
+    close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    close.Text = "X"
+    close.TextColor3 = Color3.fromRGB(255, 255, 255)
+    close.Font = Enum.Font.GothamBold
+    close.TextSize = 14
+    close.Parent = main
+    Instance.new("UICorner", close).CornerRadius = UDim.new(1, 0)
+    close.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+    -- HWID
+    local hwidLbl = Instance.new("TextLabel")
+    hwidLbl.Size = UDim2.new(1, -40, 0, 16)
+    hwidLbl.Position = UDim2.new(0, 20, 0, 50)
+    hwidLbl.BackgroundTransparency = 1
+    hwidLbl.Text = "🖥️ HWID: " .. string.sub(MY_HWID, 1, 24) .. "..."
+    hwidLbl.TextColor3 = Color3.fromRGB(120, 120, 150)
+    hwidLbl.Font = Enum.Font.Code
+    hwidLbl.TextSize = 11
+    hwidLbl.TextXAlignment = Enum.TextXAlignment.Left
+    hwidLbl.Parent = main
+
+    -- Bảng info 2 key
+    local infoBox = Instance.new("Frame")
+    infoBox.Size = UDim2.new(1, -40, 0, 66)
+    infoBox.Position = UDim2.new(0, 20, 0, 72)
+    infoBox.BackgroundColor3 = Color3.fromRGB(30, 25, 35)
+    infoBox.BorderSizePixel = 0
+    infoBox.Parent = main
+    Instance.new("UICorner", infoBox).CornerRadius = UDim.new(0, 8)
+
+    local infoStroke = Instance.new("UIStroke", infoBox)
+    infoStroke.Color = Color3.fromRGB(80, 60, 70)
+    infoStroke.Thickness = 1
+
+    -- FREE info
+    local freeLbl = Instance.new("TextLabel")
+    freeLbl.Size = UDim2.new(1, -20, 0, 30)
+    freeLbl.Position = UDim2.new(0, 10, 0, 4)
+    freeLbl.BackgroundTransparency = 1
+    freeLbl.Text = "🆓 IPHONEKUPIFREE  →  24h  •  10 lượt"
+    freeLbl.TextColor3 = Color3.fromRGB(150, 255, 150)
+    freeLbl.Font = Enum.Font.Code
+    freeLbl.TextSize = 12
+    freeLbl.TextXAlignment = Enum.TextXAlignment.Left
+    freeLbl.Parent = infoBox
+
+    -- LINK4M info
+    local linkLbl = Instance.new("TextLabel")
+    linkLbl.Size = UDim2.new(1, -20, 0, 30)
+    linkLbl.Position = UDim2.new(0, 10, 0, 32)
+    linkLbl.BackgroundTransparency = 1
+    linkLbl.Text = "🔗 IPHONEKUPILINK4M  →  48h  •  99 lượt"
+    linkLbl.TextColor3 = Color3.fromRGB(255, 215, 0)
+    linkLbl.Font = Enum.Font.Code
+    linkLbl.TextSize = 12
+    linkLbl.TextXAlignment = Enum.TextXAlignment.Left
+    linkLbl.Parent = infoBox
+
+    -- Label
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -40, 0, 20)
+    lbl.Position = UDim2.new(0, 20, 0, 148)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "🔑 Nhập Key của bạn:"
+    lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 14
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = main
+
+    -- TextBox
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, -40, 0, 44)
+    box.Position = UDim2.new(0, 20, 0, 174)
+    box.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    box.Text = ""
+    box.PlaceholderText = "Nhập key tại đây..."
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderColor3 = Color3.fromRGB(120, 120, 140)
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 14
+    box.ClearTextOnFocus = false
+    box.Parent = main
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 8)
+
+    -- Status
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, -40, 0, 50)
+    status.Position = UDim2.new(0, 20, 0, 224)
+    status.BackgroundTransparency = 1
+    status.Text = ""
+    status.TextColor3 = Color3.fromRGB(255, 200, 100)
+    status.Font = Enum.Font.Gotham
+    status.TextSize = 13
+    status.TextWrapped = true
+    status.Parent = main
+
+    -- Nút Check Key
+    local checkBtn = Instance.new("TextButton")
+    checkBtn.Size = UDim2.new(1, -40, 0, 46)
+    checkBtn.Position = UDim2.new(0, 20, 0, 280)
+    checkBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    checkBtn.Text = "✅ CHECK KEY"
+    checkBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    checkBtn.Font = Enum.Font.GothamBold
+    checkBtn.TextSize = 15
+    checkBtn.Parent = main
+    Instance.new("UICorner", checkBtn).CornerRadius = UDim.new(0, 8)
+
+    -- Nút Discord
+    local discBtn = Instance.new("TextButton")
+    discBtn.Size = UDim2.new(1, -40, 0, 42)
+    discBtn.Position = UDim2.new(0, 20, 0, 336)
+    discBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+    discBtn.Text = "💬 JOIN DISCORD — LẤY KEY"
+    discBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    discBtn.Font = Enum.Font.GothamBold
+    discBtn.TextSize = 13
+    discBtn.Parent = main
+    Instance.new("UICorner", discBtn).CornerRadius = UDim.new(0, 8)
+
+    -- Hover
+    local function addHover(btn, baseColor)
+        btn.MouseEnter:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {
+                BackgroundColor3 = baseColor:Lerp(Color3.new(1,1,1), 0.2)
+            }):Play()
+        end)
+        btn.MouseLeave:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {
+                BackgroundColor3 = baseColor
+            }):Play()
+        end)
+    end
+    addHover(checkBtn, Color3.fromRGB(220, 40, 40))
+    addHover(discBtn,  Color3.fromRGB(88, 101, 242))
+
+    -- Mở URL
+    local function openURL(url)
+        if setclipboard then setclipboard(url) end
+        local ok = pcall(function()
+            game:GetService("GuiService"):OpenBrowserWindow(url)
+        end)
+        if not ok then
+            pcall(function() request({Url = url, Method = "GET"}) end)
+        end
+        status.Text = "🔗 Đã copy link Discord! Mở trình duyệt dán vào."
+        status.TextColor3 = Color3.fromRGB(100, 220, 255)
+    end
+
+    discBtn.MouseButton1Click:Connect(function()
+        openURL(CONFIG.DISCORD_URL)
+    end)
+
+    -- Chạy script chính
+    local function runMainScript()
+        gui:Destroy()
+        local ok, err = pcall(function()
+            loadstring(game:HttpGet(CONFIG.SCRIPT_URL))()
+        end)
+        if not ok then
+            warn("[IPHONEKUPI VN🇻🇳] Lỗi load script: " .. tostring(err))
+        end
+    end
+
+    -- Xử lý check
+    local checking = false
+    local function doCheck(k)
+        if checking then return end
+        checking = true
+        checkBtn.Text = "⏳ Đang kiểm tra..."
+        status.Text = ""
+        task.spawn(function()
+            task.wait(0.5)
+            local ok, msg = checkKey(k)
+            checking = false
+            checkBtn.Text = "✅ CHECK KEY"
+            if ok then
+                status.Text = msg
+                status.TextColor3 = Color3.fromRGB(100, 255, 150)
+                task.wait(1.5)
+                runMainScript()
+            else
+                status.Text = msg
+                status.TextColor3 = Color3.fromRGB(255, 100, 100)
+            end
+        end)
+    end
+
+    checkBtn.MouseButton1Click:Connect(function()
+        local k = box.Text
+        if k == "" then
+            status.Text = "✖ Vui lòng nhập key!"
+            status.TextColor3 = Color3.fromRGB(255, 100, 100)
+            return
+        end
+        doCheck(k)
+    end)
+
+    -- Auto check key đã lưu (key nào còn lượt thì thử)
+    local allData = loadAllData()
+    local autoKey = nil
+    for k, _ in pairs(allData) do
+        if CONFIG.KEYS[k] then
+            autoKey = k
+            break
+        end
+    end
+    if autoKey then
+        box.Text = autoKey
+        status.Text = "🔍 Đang tự động check key đã lưu..."
+        task.wait(0.5)
+        doCheck(autoKey)
+    end
+end
+
+--============= BẮT ĐẦU =============
+showIntro(function()
+    createUI()
+end)
